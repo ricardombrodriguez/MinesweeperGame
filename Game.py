@@ -44,19 +44,33 @@ class Game:
                 if self.grid[row][column] is None:
                     cell = Cell("DEFAULT")
                     self.grid[row][column] = cell
-        print("done create default")
 
     # Draw canvas/grid
     def drawCanvas(self):
         pygame.draw.rect(self.canvas, BLACK, (GRID_POS[0], GRID_POS[1], GRID_WIDTH, GRID_HEIGHT), 2)
         for x in range(COL_CELLS):
-            pygame.draw.line(self.canvas, BLACK, (GRID_POS[0]+(x*CELL_SIZE), GRID_POS[1]), (GRID_POS[0]+(x*CELL_SIZE), GRID_POS[1]+GRID_HEIGHT), 1)
-        for y in range(ROW_CELLS):
-            pygame.draw.line(self.canvas, BLACK, (GRID_POS[0], GRID_POS[1]+(y*CELL_SIZE)), (GRID_POS[0]+GRID_WIDTH, GRID_POS[1]+(y*CELL_SIZE)), 1)
+            for y in range(ROW_CELLS):
+                pygame.draw.rect(self.canvas, GAINSBORO_GREY, (GRID_POS[0]+(x*CELL_SIZE), GRID_POS[1]+(y*CELL_SIZE), CELL_SIZE, CELL_SIZE), 1)
         pygame.display.flip()
-        print("canvas draw done")
+
+    def getCell(self, mouse_position):
+        #está dentro do rectangle
+        if GRID_POS[0] <= mouse_position[0] < GRID_POS[0] + GRID_WIDTH and GRID_POS[1] <= mouse_position[1] < GRID_POS[1] + GRID_HEIGHT:
+            #grid_pos = 
+            #cell = self.grid[mouse_position][]
+            return Cell
+        return None
+
 
     def events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_pos = event.pos
+                if event.button == 1:
+                    print("left click")
+                    print(mouse_pos)
+                elif event.button == 3:
+                    print("right click")
+                    print(mouse_pos)
