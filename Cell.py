@@ -5,10 +5,3 @@ class Cell:
         self.flag = False
         self.clicked = False
         self.number = None
-    
-    def click(self):
-        pass
-
-    def flagged(self):
-        pass
-

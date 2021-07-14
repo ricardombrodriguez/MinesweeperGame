@@ -1,9 +1,11 @@
+from pygame.constants import GL_CONTEXT_FORWARD_COMPATIBLE_FLAG
 from Const import *
 from Cell import Cell
 import pygame, sys, random
 
 class Game:
 
+    # Initial game settings
     def __init__(self):
         pygame.init()
         self.running = True
@@ -13,6 +15,7 @@ class Game:
         pygame.display.flip()
         self.createCells()
 
+    # Game start/end
     def run(self):
         while self.running:
             self.events()
@@ -21,7 +24,8 @@ class Game:
 
     # Create cells
     def createCells(self):
-        self.grid = [[None for col in range(COL_CELLS)] for row in range(ROW_CELLS)] 
+        self.grid = [[None for col in range(COL_CELLS)] for row in range(ROW_CELLS)]        # Store 'Cell' objects
+        self.squares = [[None for col in range(COL_CELLS)] for row in range(ROW_CELLS)]     # Store drawn squares (for future updates)
         self.createBombs()
         self.createDefault()
         self.drawCanvas()
@@ -50,27 +54,43 @@ class Game:
         pygame.draw.rect(self.canvas, BLACK, (GRID_POS[0], GRID_POS[1], GRID_WIDTH, GRID_HEIGHT), 2)
         for x in range(COL_CELLS):
             for y in range(ROW_CELLS):
-                pygame.draw.rect(self.canvas, GAINSBORO_GREY, (GRID_POS[0]+(x*CELL_SIZE), GRID_POS[1]+(y*CELL_SIZE), CELL_SIZE, CELL_SIZE), 1)
+                square = pygame.draw.rect(self.canvas, BLACK, (GRID_POS[0]+(x*CELL_SIZE), GRID_POS[1]+(y*CELL_SIZE), CELL_SIZE, CELL_SIZE), 1)
+                square.fill(GAINSBORO_GREY)
+                self.squares[y][x] = square
         pygame.display.flip()
 
+    # Returns Cell object + Rectangle object
     def getCell(self, mouse_position):
-        #está dentro do rectangle
         if GRID_POS[0] <= mouse_position[0] < GRID_POS[0] + GRID_WIDTH and GRID_POS[1] <= mouse_position[1] < GRID_POS[1] + GRID_HEIGHT:
-            #grid_pos = 
-            #cell = self.grid[mouse_position][]
-            return Cell
+            grid_position = (mouse_position[0]-GRID_POS[0],mouse_position[1]-GRID_POS[1])
+            cell = self.grid[grid_position[0]//CELL_SIZE][grid_position[1]//CELL_SIZE]
+            square = self.squares[grid_position[0]//CELL_SIZE][grid_position[1]//CELL_SIZE]
+            return cell, square
         return None
 
+    # Cell click event
+    def click(self, cell, square):
+        pass
 
+    # Cell flag event
+    def flag(self, cell, square):
+        pass
+
+    # Calculate cell surrounding bombs and set number
+    def surrounding_bombs_value():
+        pass
+
+    # Handle events
     def events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_pos = event.pos
-                if event.button == 1:
-                    print("left click")
-                    print(mouse_pos)
-                elif event.button == 3:
-                    print("right click")
-                    print(mouse_pos)
+                cell, square = self.getCell(mouse_pos)
+                print(cell)
+                print(square)
+                if event.button == 1:           # mouse left-click event
+                    self.click(cell,square)
+                elif event.button == 3:         # mouse right-click event
+                    self.flag(cell,square)
