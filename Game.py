@@ -75,7 +75,7 @@ class Game:
             self.end("L")
         if not cell.clicked:
             cell.clicked = True
-            self.update_square(cell,"CLICK")
+            self.update_square(cell,square,"CLICK")
 
 
     # Cell flag event
@@ -83,10 +83,10 @@ class Game:
         if not cell.clicked:
             if cell.flag == False:
                 cell.flag = True
-                self.update_square(cell,"FLAG")
+                self.update_square(cell,square,"FLAG")
             else:
                 cell.flag = False
-                self.update_square(cell,"UNCLICK")
+                self.update_square(cell,square,"UNCLICK")
 
     # Calculate cell surrounding bombs and set number
     def surrounding_bombs_value(self):
@@ -111,13 +111,27 @@ class Game:
                       
 
     # Gets square + operation (flag, click, unselect...) to fill the square with different colors/images/emojis(?)
-    def update_square(square,cell,operation):
+    def update_square(self,cell,square,operation):
+        font = pygame.font.SysFont('Arial', 20)
+
         if operation == "CLICK":
-            pass
+            text = str(cell.number)
         elif operation == "FLAG":
-            pass
+            text = "F"
         elif operation == "UNCLICK":
-            pass
+            text = " "
+            square.x += 1
+            square.y += 1
+            square.width -= 5
+            square.height -= 5
+            pygame.draw.rect(self.canvas, WHITE, square)
+            square.x -= 1
+            square.y -= 1
+            square.width += 5
+            square.height += 5
+        font = pygame.font.SysFont('Arial', 20)
+        self.canvas.blit(font.render(text, True, BLACK), (square.left+5, square.top+5))
+        pygame.display.update()
 
     # End game -> (W)in / (L)ose
     def end(self,operation):
