@@ -1,6 +1,6 @@
-from pygame.constants import GL_CONTEXT_FORWARD_COMPATIBLE_FLAG
 from Const import *
 from Cell import Cell
+import time
 import pygame, sys, random
 
 class Game:
@@ -29,7 +29,7 @@ class Game:
         self.createBombs()
         self.createDefault()
         self.drawCanvas()
-        self.surrounding_bombs_value()
+        self.surroundingBombsValue()
 
     # Creating bombs
     def createBombs(self):
@@ -59,37 +59,58 @@ class Game:
                 self.squares[y][x] = square
         pygame.display.flip()
 
-    # Returns Cell object + Rectangle object
-    def getCell(self, mouse_position):
+    # Returns Cell object + Rectangle object + Grid position
+    def getGridPosition(self, mouse_position):
         if GRID_POS[0] <= mouse_position[0] < GRID_POS[0] + GRID_WIDTH and GRID_POS[1] <= mouse_position[1] < GRID_POS[1] + GRID_HEIGHT:
-            grid_position = (mouse_position[0]-GRID_POS[0],mouse_position[1]-GRID_POS[1])
-            print(str(grid_position[0]//CELL_SIZE) + ":" + str(grid_position[1]//CELL_SIZE))
-            cell = self.grid[grid_position[1]//CELL_SIZE][grid_position[0]//CELL_SIZE]
-            square = self.squares[grid_position[1]//CELL_SIZE][grid_position[0]//CELL_SIZE]
-            return cell, square
-        return None, None
+            mouse_pos = (mouse_position[0]-GRID_POS[0],mouse_position[1]-GRID_POS[1])
+            grid_position = (mouse_pos[1]//CELL_SIZE, mouse_pos[0]//CELL_SIZE)
+            cell = self.grid[grid_position[0]][grid_position[1]]
+            square = self.squares[grid_position[0]][grid_position[1]]
+            return cell, square, grid_position
+        return None, None, None
 
     # Cell click event
-    def click(self, cell, square):
+    def click(self, cell, square, grid_position):
         if cell.bomb:
             self.end("L")
-        if not cell.clicked:
-            cell.clicked = True
-            self.update_square(cell,square,"CLICK")
+        else:
+            if not cell.clicked:
+                cell.clicked = True
+                self.updateSquare(cell,square,"CLICK")
+                if cell.number == 0:
+                    self.findEmptyNeighbours(grid_position[0],grid_position[1])
 
+    # Recursive neighbour empty-cell search
+    def findEmptyNeighbours(self, row, column):
+        for j in range(-1,2,1):
+            for k in range(-1,2,1):
+                if row + j < 0 or row + j >= ROW_CELLS or column + k < 0 or column + k >= COL_CELLS:
+                    print("index error")
+                    print(str(row)+":"+str(column))
+                    continue
+                elif row + j == row and column + k == column:
+                    continue
+                else:
+                    neighbour_cell = self.grid[row+j][column+k]
+                    neighbour_square = self.squares[row+j][column+k]
+                    if not neighbour_cell.clicked and not neighbour_cell.bomb:
+                        neighbour_cell.clicked = True
+                        self.updateSquare(neighbour_cell,neighbour_square,"CLICK")
+                        if neighbour_cell.number == 0:
+                            self.findEmptyNeighbours(row+j,column+k)
 
     # Cell flag event
     def flag(self, cell, square):
         if not cell.clicked:
             if cell.flag == False:
                 cell.flag = True
-                self.update_square(cell,square,"FLAG")
+                self.updateSquare(cell,square,"FLAG")
             else:
                 cell.flag = False
-                self.update_square(cell,square,"UNCLICK")
+                self.updateSquare(cell,square,"UNCLICK")
 
     # Calculate cell surrounding bombs and set number
-    def surrounding_bombs_value(self):
+    def surroundingBombsValue(self):
         for col in range(COL_CELLS):
             for row in range(ROW_CELLS):
                 cell = self.grid[row][col]
@@ -106,12 +127,12 @@ class Game:
         
 
         # for debugging
-        temp = [[self.grid[row][col].number for col in range(COL_CELLS)] for row in range(ROW_CELLS)] 
+        temp = [[self.grid[row][col].number if not self.grid[row][col].bomb else -1 for col in range(COL_CELLS)] for row in range(ROW_CELLS)] 
         print(temp)
                       
 
     # Gets square + operation (flag, click, unselect...) to fill the square with different colors/images/emojis(?)
-    def update_square(self,cell,square,operation):
+    def updateSquare(self,cell,square,operation):
         font = pygame.font.SysFont('Arial', 20)
 
         if operation == "CLICK":
@@ -119,6 +140,7 @@ class Game:
         elif operation == "FLAG":
             text = "F"
         elif operation == "UNCLICK":
+            # overwrite 'F' text
             text = " "
             square.x += 1
             square.y += 1
@@ -135,10 +157,11 @@ class Game:
 
     # End game -> (W)in / (L)ose
     def end(self,operation):
+        self.running = False
         if operation == "L":
             print("LOST")
-            self.running = False
-        pass
+        if operation == "W":
+            print("WIN")
 
     # Handle events
     def events(self):
@@ -147,10 +170,10 @@ class Game:
                 self.running = False
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_pos = event.pos
-                cell, square = self.getCell(mouse_pos)
+                cell,square,grid_position = self.getGridPosition(mouse_pos)
                 if cell is None:
                     return
                 if event.button == 1:           # mouse left-click event
-                    self.click(cell,square)
+                    self.click(cell,square,grid_position)
                 elif event.button == 3:         # mouse right-click event
                     self.flag(cell,square)
