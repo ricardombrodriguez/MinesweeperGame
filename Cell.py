@@ -4,4 +4,4 @@ class Cell:
         self.bomb = True if type == "BOMB" else False
         self.flag = False
         self.clicked = False
-        self.number = None
+        self.number = 0
