@@ -10,7 +10,7 @@ class Game:
         pygame.init()
         self.running = True
         self.canvas = pygame.display.set_mode((WIDTH,HEIGHT))
-        self.canvas.fill(WHITE)
+        self.canvas.fill(DARK_GREY)
         pygame.display.set_caption("Minesweeper")
         pygame.display.flip()
         self.createCells()
@@ -52,10 +52,10 @@ class Game:
 
     # Draw canvas/grid
     def drawCanvas(self):
-        pygame.draw.rect(self.canvas, BLACK, (GRID_POS[0], GRID_POS[1], GRID_WIDTH, GRID_HEIGHT), 2)
+        pygame.draw.rect(self.canvas, DARK_GREY, (GRID_POS[0], GRID_POS[1], GRID_WIDTH, GRID_HEIGHT), 2)
         for x in range(COL_CELLS):
             for y in range(ROW_CELLS):
-                square = pygame.draw.rect(self.canvas, BLACK, (GRID_POS[0]+(x*CELL_SIZE), GRID_POS[1]+(y*CELL_SIZE), CELL_SIZE, CELL_SIZE), 1)
+                square = pygame.draw.rect(self.canvas, WHITE, (GRID_POS[0]+(x*CELL_SIZE), GRID_POS[1]+(y*CELL_SIZE), CELL_SIZE, CELL_SIZE), 1)
                 self.squares[y][x] = square
         pygame.display.flip()
 
@@ -84,11 +84,7 @@ class Game:
     def findEmptyNeighbours(self, row, column):
         for j in range(-1,2,1):
             for k in range(-1,2,1):
-                if row + j < 0 or row + j >= ROW_CELLS or column + k < 0 or column + k >= COL_CELLS:
-                    print("index error")
-                    print(str(row)+":"+str(column))
-                    continue
-                elif row + j == row and column + k == column:
+                if row + j < 0 or row + j >= ROW_CELLS or column + k < 0 or column + k >= COL_CELLS or (row + j == row and column + k == column):
                     continue
                 else:
                     neighbour_cell = self.grid[row+j][column+k]
@@ -133,27 +129,35 @@ class Game:
 
     # Gets square + operation (flag, click, unselect...) to fill the square with different colors/images/emojis(?)
     def updateSquare(self,cell,square,operation):
-        font = pygame.font.SysFont('Arial', 20)
-
         if operation == "CLICK":
             text = str(cell.number)
+            square = self.overwriteSquare(GAINSBORO_GREY,square)
         elif operation == "FLAG":
             text = "F"
+            square = self.overwriteSquare(GAINSBORO_GREY,square)
         elif operation == "UNCLICK":
-            # overwrite 'F' text
             text = " "
-            square.x += 1
-            square.y += 1
-            square.width -= 5
-            square.height -= 5
-            pygame.draw.rect(self.canvas, WHITE, square)
-            square.x -= 1
-            square.y -= 1
-            square.width += 5
-            square.height += 5
-        font = pygame.font.SysFont('Arial', 20)
+            square = self.overwriteSquare(DARK_GREY,square)
+        font = pygame.font.SysFont('Arial', 25)
         self.canvas.blit(font.render(text, True, BLACK), (square.left+5, square.top+5))
         pygame.display.update()
+
+    # Overwrite the square and fill it with a specified color
+    def overwriteSquare(self, color, square):
+        square.x += 1
+        square.y += 1
+        square.width -= 1
+        square.height -= 1
+        pygame.draw.rect(self.canvas, color, square)
+        square.x -= 1
+        square.y -= 1
+        square.width += 1
+        square.height += 1
+        return square
+
+    # Check if it's a win
+    def checkWin(self):
+        pass
 
     # End game -> (W)in / (L)ose
     def end(self,operation):
@@ -177,3 +181,4 @@ class Game:
                     self.click(cell,square,grid_position)
                 elif event.button == 3:         # mouse right-click event
                     self.flag(cell,square)
+                self.checkWin()
