@@ -2,6 +2,8 @@ from Const import *
 from Cell import Cell
 import time
 import pygame, sys, random
+import timeit
+
 
 class Game:
 
@@ -13,6 +15,9 @@ class Game:
         self.canvas.fill(DARK_GREY)
         pygame.display.set_caption("Minesweeper")
         pygame.display.flip()
+        self.remaining_flags = NUM_BOMBS
+        self.remaining_cells = ROW_CELLS*COL_CELLS - NUM_BOMBS
+        self.starting_time = timeit.timeit()
         self.createCells()
 
     # Game start/end
@@ -75,6 +80,7 @@ class Game:
             self.end("L")
         else:
             if not cell.clicked:
+                self.remaining_cells -= 1
                 cell.clicked = True
                 self.updateSquare(cell,square,"CLICK")
                 if cell.number == 0:
@@ -90,6 +96,7 @@ class Game:
                     neighbour_cell = self.grid[row+j][column+k]
                     neighbour_square = self.squares[row+j][column+k]
                     if not neighbour_cell.clicked and not neighbour_cell.bomb:
+                        self.remaining_cells -= 1
                         neighbour_cell.clicked = True
                         self.updateSquare(neighbour_cell,neighbour_square,"CLICK")
                         if neighbour_cell.number == 0:
@@ -98,11 +105,13 @@ class Game:
     # Cell flag event
     def flag(self, cell, square):
         if not cell.clicked:
-            if cell.flag == False:
+            if cell.flag == False and self.remaining_flags > 0:
                 cell.flag = True
+                self.remaining_flags -= 1
                 self.updateSquare(cell,square,"FLAG")
-            else:
+            elif cell.flag == True:
                 cell.flag = False
+                self.remaining_flags += 1
                 self.updateSquare(cell,square,"UNCLICK")
 
     # Calculate cell surrounding bombs and set number
@@ -157,7 +166,14 @@ class Game:
 
     # Check if it's a win
     def checkWin(self):
-        pass
+        if self.remaining_cells + self.remaining_flags != 0:
+            return False
+        for col in range(COL_CELLS):
+            for row in range(ROW_CELLS):
+                cell = self.grid[row][col]
+                if cell.flag and not cell.bomb:
+                    return False
+        return True
 
     # End game -> (W)in / (L)ose
     def end(self,operation):
@@ -181,4 +197,8 @@ class Game:
                     self.click(cell,square,grid_position)
                 elif event.button == 3:         # mouse right-click event
                     self.flag(cell,square)
-                self.checkWin()
+                isWin = self.checkWin()
+                print("===========")
+                print("CELLS: " + str(self.remaining_cells) + " | FLAGS: " + str(self.remaining_flags))
+                if isWin:
+                    self.end("W")
