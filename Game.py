@@ -1,8 +1,7 @@
+import pygame, sys, random, tkinter
 from Const import *
 from Cell import Cell
-import time
-import pygame, sys, random
-import timeit
+from tkinter import messagebox
 
 
 class Game:
@@ -17,8 +16,15 @@ class Game:
         pygame.display.flip()
         self.remaining_flags = NUM_BOMBS
         self.remaining_cells = ROW_CELLS*COL_CELLS - NUM_BOMBS
-        self.starting_time = timeit.timeit()
         self.createCells()
+        self.clock = pygame.time.Clock()
+        self.time_counter = 0
+        self.time_text = '1000000'.rjust(3)
+        self.timer_surface = pygame.Surface((WIDTH, 50))
+        self.timer_surface.fill(DARK_GREY)
+        self.canvas.blit(self.timer_surface, (100, 49))
+        pygame.display.update()
+        pygame.time.set_timer(pygame.USEREVENT, 1000)
 
     # Game start/end
     def run(self):
@@ -96,11 +102,7 @@ class Game:
                     neighbour_cell = self.grid[row+j][column+k]
                     neighbour_square = self.squares[row+j][column+k]
                     if not neighbour_cell.clicked and not neighbour_cell.bomb:
-                        self.remaining_cells -= 1
-                        neighbour_cell.clicked = True
-                        self.updateSquare(neighbour_cell,neighbour_square,"CLICK")
-                        if neighbour_cell.number == 0:
-                            self.findEmptyNeighbours(row+j,column+k)
+                        self.click(neighbour_cell,neighbour_square,(row+j,column+k))
 
     # Cell flag event
     def flag(self, cell, square):
@@ -179,15 +181,31 @@ class Game:
     def end(self,operation):
         self.running = False
         if operation == "L":
+            root = tkinter.Tk()
+            root.withdraw()
+            messagebox.showinfo("Minesweeper", "YOU LOST!")
             print("LOST")
         if operation == "W":
+            root = tkinter.Tk()
+            root.withdraw()
+            messagebox.showinfo("Minesweeper!", "YOU WON!\nYou completed the game in " + str(self.time_counter) + " seconds!")
             print("WIN")
 
     # Handle events
     def events(self):
+        self.clock.tick(60)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
+            elif event.type == pygame.USEREVENT:
+                self.timer_surface.fill(DARK_GREY)
+                self.canvas.blit(self.timer_surface,(100, 49))
+                pygame.display.update()
+                font = pygame.font.SysFont('Arial', 25)
+                self.time_counter += 1
+                self.time_text = ("Timer: " + str(self.time_counter) + "s").rjust(3)
+                self.canvas.blit(font.render(self.time_text, True, WHITE), (100, 65))
+                pygame.display.update()
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_pos = event.pos
                 cell,square,grid_position = self.getGridPosition(mouse_pos)
@@ -197,8 +215,7 @@ class Game:
                     self.click(cell,square,grid_position)
                 elif event.button == 3:         # mouse right-click event
                     self.flag(cell,square)
-                isWin = self.checkWin()
                 print("===========")
                 print("CELLS: " + str(self.remaining_cells) + " | FLAGS: " + str(self.remaining_flags))
-                if isWin:
+                if self.checkWin():
                     self.end("W")
