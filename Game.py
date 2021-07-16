@@ -140,17 +140,34 @@ class Game:
 
     # Gets square + operation (flag, click, unselect...) to fill the square with different colors/images/emojis(?)
     def updateSquare(self,cell,square,operation):
+        font = pygame.font.SysFont('Arial', 25)
         if operation == "CLICK":
-            text = str(cell.number)
-            square = self.overwriteSquare(GAINSBORO_GREY,square)
+            self.clickSquare(cell,square)
         elif operation == "FLAG":
             text = "F"
             square = self.overwriteSquare(GAINSBORO_GREY,square)
+            self.canvas.blit(font.render(text, True, BLACK), (square.left+5, square.top+5))
         elif operation == "UNCLICK":
-            text = " "
             square = self.overwriteSquare(DARK_GREY,square)
+        pygame.display.update()
+
+    #Draw square + number
+    def clickSquare(self,cell,square):
+        color = None
+        color = NUMBER0 if cell.number == 0 else color
+        color = NUMBER1 if cell.number == 1 else color
+        color = NUMBER2 if cell.number == 2 else color
+        color = NUMBER3 if cell.number == 3 else color
+        color = NUMBER4 if cell.number == 4 else color
+        color = NUMBER5 if cell.number == 5 else color
+        color = NUMBER6 if cell.number == 6 else color
+        color = NUMBER7 if cell.number == 7 else color
+        color = NUMBER8 if cell.number == 8 else color
+        self.overwriteSquare(color,square)
         font = pygame.font.SysFont('Arial', 25)
-        self.canvas.blit(font.render(text, True, BLACK), (square.left+5, square.top+5))
+        if cell.number != 0:
+            text = str(cell.number)
+            self.canvas.blit(font.render(text, True, BLACK), (square.left+10, square.top+5))
         pygame.display.update()
 
     # Overwrite the square and fill it with a specified color
