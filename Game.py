@@ -3,13 +3,13 @@ from Const import *
 from Cell import Cell
 from tkinter import messagebox
 
-
 class Game:
 
     # Initial game settings
     def __init__(self):
         pygame.init()
         self.running = True
+        self.firstTime = True
         self.canvas = pygame.display.set_mode((WIDTH,HEIGHT))
         self.canvas.fill(DARK_GREY)
         pygame.display.set_caption("Minesweeper")
@@ -17,14 +17,6 @@ class Game:
         self.remaining_flags = NUM_BOMBS
         self.remaining_cells = ROW_CELLS*COL_CELLS - NUM_BOMBS
         self.createCells()
-        self.clock = pygame.time.Clock()
-        self.time_counter = 0
-        self.time_text = '1000000'.rjust(3)
-        self.timer_surface = pygame.Surface((WIDTH, 50))
-        self.timer_surface.fill(DARK_GREY)
-        self.canvas.blit(self.timer_surface, (100, 49))
-        pygame.display.update()
-        pygame.time.set_timer(pygame.USEREVENT, 1000)
 
     # Game start/end
     def run(self):
@@ -66,7 +58,7 @@ class Game:
         pygame.draw.rect(self.canvas, DARK_GREY, (GRID_POS[0], GRID_POS[1], GRID_WIDTH, GRID_HEIGHT), 2)
         for x in range(COL_CELLS):
             for y in range(ROW_CELLS):
-                square = pygame.draw.rect(self.canvas, WHITE, (GRID_POS[0]+(x*CELL_SIZE), GRID_POS[1]+(y*CELL_SIZE), CELL_SIZE, CELL_SIZE), 1)
+                square = pygame.draw.rect(self.canvas, WHITE, (GRID_POS[0]+(x*CELL_SIZE), GRID_POS[1]+(y*CELL_SIZE), CELL_SIZE, CELL_SIZE), 2)
                 self.squares[y][x] = square
         pygame.display.flip()
 
@@ -125,11 +117,12 @@ class Game:
                 if not cell.bomb:
                     for j in range(-1,2,1):
                         for k in range(-1,2,1):
-                            try:
-                                neighbour_cell = self.grid[row+j][col+k]
-                                surrounding_bombs = surrounding_bombs + 1 if neighbour_cell.bomb else surrounding_bombs
-                            except IndexError:
-                                continue
+                            if 0 <= row+j < ROW_CELLS and 0 <= col+k < COL_CELLS:
+                                try:
+                                    neighbour_cell = self.grid[row+j][col+k]
+                                    surrounding_bombs = surrounding_bombs + 1 if neighbour_cell.bomb else surrounding_bombs
+                                except IndexError:
+                                    continue
                 cell.number = surrounding_bombs
         
 
@@ -144,25 +137,18 @@ class Game:
         if operation == "CLICK":
             self.clickSquare(cell,square)
         elif operation == "FLAG":
-            text = "F"
-            square = self.overwriteSquare(GAINSBORO_GREY,square)
-            self.canvas.blit(font.render(text, True, BLACK), (square.left+5, square.top+5))
+            myimage = pygame.image.load("bandeira.png")
+            imagerect = myimage.get_rect()
+            self.canvas.blit(myimage,(square.left+10, square.top+5))
+            pygame.display.flip()
         elif operation == "UNCLICK":
             square = self.overwriteSquare(DARK_GREY,square)
         pygame.display.update()
 
     #Draw square + number
     def clickSquare(self,cell,square):
-        color = None
-        color = NUMBER0 if cell.number == 0 else color
-        color = NUMBER1 if cell.number == 1 else color
-        color = NUMBER2 if cell.number == 2 else color
-        color = NUMBER3 if cell.number == 3 else color
-        color = NUMBER4 if cell.number == 4 else color
-        color = NUMBER5 if cell.number == 5 else color
-        color = NUMBER6 if cell.number == 6 else color
-        color = NUMBER7 if cell.number == 7 else color
-        color = NUMBER8 if cell.number == 8 else color
+        colors = [NUMBER0,NUMBER1,NUMBER2,NUMBER3,NUMBER4,NUMBER5,NUMBER6,NUMBER7,NUMBER8]
+        color = colors[cell.number]
         self.overwriteSquare(color,square)
         font = pygame.font.SysFont('Arial', 25)
         if cell.number != 0:
@@ -172,15 +158,15 @@ class Game:
 
     # Overwrite the square and fill it with a specified color
     def overwriteSquare(self, color, square):
-        square.x += 1
-        square.y += 1
-        square.width -= 1
-        square.height -= 1
+        square.x += 2
+        square.y += 2
+        square.width -= 4
+        square.height -= 4
         pygame.draw.rect(self.canvas, color, square)
-        square.x -= 1
-        square.y -= 1
-        square.width += 1
-        square.height += 1
+        square.x -= 2
+        square.y -= 2
+        square.width += 4
+        square.height += 4
         return square
 
     # Check if it's a win
@@ -201,16 +187,15 @@ class Game:
             root = tkinter.Tk()
             root.withdraw()
             messagebox.showinfo("Minesweeper", "YOU LOST!")
-            print("LOST")
         if operation == "W":
             root = tkinter.Tk()
             root.withdraw()
             messagebox.showinfo("Minesweeper!", "YOU WON!\nYou completed the game in " + str(self.time_counter) + " seconds!")
-            print("WIN")
 
     # Handle events
     def events(self):
-        self.clock.tick(60)
+        if self.firstTime == False:
+            self.clock.tick(60)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
@@ -224,6 +209,16 @@ class Game:
                 self.canvas.blit(font.render(self.time_text, True, WHITE), (100, 65))
                 pygame.display.update()
             elif event.type == pygame.MOUSEBUTTONDOWN:
+                if self.firstTime:
+                    self.clock = pygame.time.Clock()
+                    self.time_counter = 0
+                    self.time_text = '1000000'.rjust(3)
+                    self.timer_surface = pygame.Surface((WIDTH, 50))
+                    self.timer_surface.fill(DARK_GREY)
+                    self.canvas.blit(self.timer_surface, (100, 49))
+                    pygame.display.update()
+                    pygame.time.set_timer(pygame.USEREVENT, 1000)
+                    self.firstTime = False
                 mouse_pos = event.pos
                 cell,square,grid_position = self.getGridPosition(mouse_pos)
                 if cell is None:
