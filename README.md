@@ -2,6 +2,7 @@
 
 In this project, I implemented the popular [Minesweeper](https://en.wikipedia.org/wiki/Minesweeper_(video_game)) game in Python. If you look forward to play this game but don't know how it works, I recommend you to watch [this video](https://www.youtube.com/watch?v=7B85WbEiYf4).
 
+
 ## How to run
 
 To run the program, you need to be inside the project folder and type one of the following lines:
