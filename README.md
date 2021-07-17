@@ -19,9 +19,9 @@ python Main.py x y z
 
 ## Screenshots:
 
-![Screenshot 1](/min1?raw=true)
+![Screenshot 1](min1.png)
 
-![Screenshot 2](/min3?raw=true)
+![Screenshot 2](min3.png)
 
 ## Author
 
