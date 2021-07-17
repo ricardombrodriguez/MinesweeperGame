@@ -19,6 +19,13 @@ class Game:
         self.remaining_flags = NUM_BOMBS
         self.remaining_cells = ROW_CELLS*COL_CELLS - NUM_BOMBS
         self.drawCanvas()
+        self.timer_surface.fill(DARK_GREY)
+        self.canvas.blit(self.timer_surface,(100, 49))
+        pygame.display.update()
+        font = pygame.font.SysFont('Arial', 25)
+        self.time_counter += 1
+        self.time_text = ("Timer: " + str(self.time_counter) + "s").rjust(3)
+        self.canvas.blit(font.render(self.time_text, True, WHITE), (100, 65))
 
     # Game start/end
     def run(self):
@@ -129,21 +136,14 @@ class Game:
                                 except IndexError:
                                     continue
                 cell.number = surrounding_bombs
-        
-
-        # for debugging
-        temp = [[self.grid[row][col].number if not self.grid[row][col].bomb else -1 for col in range(COL_CELLS)] for row in range(ROW_CELLS)] 
-        print(temp)
-                      
 
     # Gets square + operation (flag, click, unselect...) to fill the square with different colors/images/emojis(?)
     def updateSquare(self,cell,square,operation):
         if operation == "CLICK":
             self.clickSquare(cell,square)
         elif operation == "FLAG":
-            myimage = pygame.image.load("bandeira.png")
-            imagerect = myimage.get_rect()
-            self.canvas.blit(myimage,(square.left+10, square.top+5))
+            flag = pygame.image.load("bandeira.png")
+            self.canvas.blit(flag,(square.left+10, square.top+5))
             pygame.display.flip()
         elif operation == "UNCLICK":
             square = self.overwriteSquare(DARK_GREY,square)
@@ -188,6 +188,19 @@ class Game:
     def end(self,operation):
         self.running = False
         if operation == "L":
+            mine = pygame.image.load("mine.png")
+            flag = pygame.image.load("bandeira.png")
+            for col in range(COL_CELLS):
+                for row in range(ROW_CELLS):
+                    cell = self.grid[row][col]
+                    square = self.squares[row][col]
+                    if cell.flag and cell.bomb:
+                        self.overwriteSquare(ERROR,square)
+                        self.canvas.blit(flag,(square.left+8, square.top+5))
+                    elif not cell.flag and cell.bomb:
+                        self.overwriteSquare(ERROR,square)
+                        self.canvas.blit(mine,(square.left+8, square.top+5))
+            pygame.display.flip()
             root = tkinter.Tk()
             root.withdraw()
             messagebox.showinfo("Minesweeper", "YOU LOST!")
@@ -214,7 +227,6 @@ class Game:
                 pygame.display.update()
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_pos = event.pos
-                print(mouse_pos)
                 if self.firstTime:
                     self.clock = pygame.time.Clock()
                     self.time_counter = 0
@@ -226,34 +238,21 @@ class Game:
                     pygame.time.set_timer(pygame.USEREVENT, 1000)
                     cell,square,grid_position = self.getGridPosition(mouse_pos)
                     if grid_position is None:
-                        print("na")
                         return
-                    print("passou")
                     self.firstPosition = grid_position
                     self.cantHaveBombs = []
                     for j in range(-1,2,1):
                         for k in range(-1,2,1):
                             if 0 <= self.firstPosition[0]+j < ROW_CELLS and 0 <= self.firstPosition[1]+k < COL_CELLS:
-                                print("ya")
                                 self.cantHaveBombs.append((self.firstPosition[0]+j,self.firstPosition[1]+k))
-                    print(self.cantHaveBombs)
                     self.createCells()
-                    print("lll")
-                print(mouse_pos)
                 cell,square,grid_position = self.getGridPosition(mouse_pos)
-                print(grid_position)
-                print("laslalsas")
                 if grid_position is None:
-                    print("na")
                     return
-                print("passou")
                 if event.button == 1:           # mouse left-click event
                     self.click(cell,square,grid_position)
                 elif event.button == 3:         # mouse right-click event
                     self.flag(cell,square)
-                print("===========")
-                print("CELLS: " + str(self.remaining_cells) + " | FLAGS: " + str(self.remaining_flags))
                 if self.checkWin():
                     self.end("W")
-                if self.firstTime:
-                    self.firstTime = False
+                self.firstTime = False
