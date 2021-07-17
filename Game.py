@@ -1,6 +1,4 @@
 import pygame, sys, random, tkinter
-
-from pygame import mouse
 from Const import *
 from Cell import Cell
 from tkinter import messagebox
@@ -8,7 +6,13 @@ from tkinter import messagebox
 class Game:
 
     # Initial game settings
-    def __init__(self):
+    def __init__(self, rows, cols, bombs):
+        global ROW_CELLS,COL_CELLS,NUM_BOMBS,GRID_WIDTH,GRID_HEIGHT
+        ROW_CELLS = rows
+        COL_CELLS = cols
+        NUM_BOMBS = bombs
+        GRID_WIDTH = COL_CELLS*CELL_SIZE
+        GRID_HEIGHT = ROW_CELLS*CELL_SIZE
         pygame.init()
         self.running = True
         self.firstTime = True
@@ -19,13 +23,24 @@ class Game:
         self.remaining_flags = NUM_BOMBS
         self.remaining_cells = ROW_CELLS*COL_CELLS - NUM_BOMBS
         self.drawCanvas()
+        self.font = pygame.font.SysFont('Arial', 25)
+        # Clock UI:
+        self.clock = pygame.time.Clock()
+        self.time_counter = 0
+        self.timer_surface = pygame.Surface((100, 50))
         self.timer_surface.fill(DARK_GREY)
-        self.canvas.blit(self.timer_surface,(100, 49))
-        pygame.display.update()
-        font = pygame.font.SysFont('Arial', 25)
-        self.time_counter += 1
+        self.canvas.blit(self.timer_surface, (100, 49))
         self.time_text = ("Timer: " + str(self.time_counter) + "s").rjust(3)
-        self.canvas.blit(font.render(self.time_text, True, WHITE), (100, 65))
+        self.canvas.blit(self.font.render(self.time_text, True, WHITE), (100, 65))
+        pygame.display.update()
+        # Flag counter UI:
+        self.flags_surface = pygame.Surface((300, 50))
+        self.flags_surface.fill(DARK_GREY)
+        self.canvas.blit(self.flags_surface, (300, 49))
+        self.flags_text = ("Flags: " + str(NUM_BOMBS-self.remaining_flags) + "/" + str(NUM_BOMBS)).rjust(3)
+        self.canvas.blit(self.font.render(self.flags_text, True, WHITE), (300, 65))
+        pygame.display.update()
+
 
     # Game start/end
     def run(self):
@@ -119,6 +134,12 @@ class Game:
                 cell.flag = False
                 self.remaining_flags += 1
                 self.updateSquare(cell,square,"UNCLICK")
+        #Update flag UI counter
+        self.flags_surface.fill(DARK_GREY)
+        self.canvas.blit(self.flags_surface, (300, 49))
+        self.flags_text = ("Flags: " + str(NUM_BOMBS-self.remaining_flags) + "/" + str(NUM_BOMBS)).rjust(3)
+        self.canvas.blit(self.font.render(self.flags_text, True, WHITE), (300, 65))
+        pygame.display.update()
 
     # Calculate cell surrounding bombs and set number
     def surroundingBombsValue(self):
@@ -143,7 +164,7 @@ class Game:
             self.clickSquare(cell,square)
         elif operation == "FLAG":
             flag = pygame.image.load("bandeira.png")
-            self.canvas.blit(flag,(square.left+10, square.top+5))
+            self.canvas.blit(flag,(square.left+6, square.top+5))
             pygame.display.flip()
         elif operation == "UNCLICK":
             square = self.overwriteSquare(DARK_GREY,square)
@@ -154,10 +175,9 @@ class Game:
         colors = [NUMBER0,NUMBER1,NUMBER2,NUMBER3,NUMBER4,NUMBER5,NUMBER6,NUMBER7,NUMBER8]
         color = colors[cell.number]
         self.overwriteSquare(color,square)
-        font = pygame.font.SysFont('Arial', 25)
         if cell.number != 0:
             text = str(cell.number)
-            self.canvas.blit(font.render(text, True, BLACK), (square.left+10, square.top+5))
+            self.canvas.blit(self.font.render(text, True, BLACK), (square.left+10, square.top+5))
         pygame.display.update()
 
     # Overwrite the square and fill it with a specified color
@@ -194,7 +214,7 @@ class Game:
                 for row in range(ROW_CELLS):
                     cell = self.grid[row][col]
                     square = self.squares[row][col]
-                    if cell.flag and cell.bomb:
+                    if cell.flag and not cell.bomb:
                         self.overwriteSquare(ERROR,square)
                         self.canvas.blit(flag,(square.left+8, square.top+5))
                     elif not cell.flag and cell.bomb:
@@ -220,21 +240,13 @@ class Game:
                 self.timer_surface.fill(DARK_GREY)
                 self.canvas.blit(self.timer_surface,(100, 49))
                 pygame.display.update()
-                font = pygame.font.SysFont('Arial', 25)
                 self.time_counter += 1
                 self.time_text = ("Timer: " + str(self.time_counter) + "s").rjust(3)
-                self.canvas.blit(font.render(self.time_text, True, WHITE), (100, 65))
+                self.canvas.blit(self.font.render(self.time_text, True, WHITE), (100, 65))
                 pygame.display.update()
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_pos = event.pos
                 if self.firstTime:
-                    self.clock = pygame.time.Clock()
-                    self.time_counter = 0
-                    self.time_text = '1000000'.rjust(3)
-                    self.timer_surface = pygame.Surface((WIDTH, 50))
-                    self.timer_surface.fill(DARK_GREY)
-                    self.canvas.blit(self.timer_surface, (100, 49))
-                    pygame.display.update()
                     pygame.time.set_timer(pygame.USEREVENT, 1000)
                     cell,square,grid_position = self.getGridPosition(mouse_pos)
                     if grid_position is None:
