@@ -18,8 +18,9 @@ python Main.py x y z
 
 ## Screenshots:
 
-![Screenshot 1](https://prntscr.com/1caws0e)
-![Screenshot 2](https://prntscr.com/1cax88t)
+![Screenshot 1](/min1?raw=true)
+
+![Screenshot 2](/min3?raw=true)
 
 ## Author
 
