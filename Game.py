@@ -27,7 +27,7 @@ class Game:
         # Clock UI:
         self.clock = pygame.time.Clock()
         self.time_counter = 0
-        self.timer_surface = pygame.Surface((100, 50))
+        self.timer_surface = pygame.Surface((150, 50))
         self.timer_surface.fill(DARK_GREY)
         self.canvas.blit(self.timer_surface, (100, 49))
         self.time_text = ("Timer: " + str(self.time_counter) + "s").rjust(3)
