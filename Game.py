@@ -1,4 +1,6 @@
 import pygame, sys, random, tkinter
+
+from pygame import mouse
 from Const import *
 from Cell import Cell
 from tkinter import messagebox
@@ -16,7 +18,7 @@ class Game:
         pygame.display.flip()
         self.remaining_flags = NUM_BOMBS
         self.remaining_cells = ROW_CELLS*COL_CELLS - NUM_BOMBS
-        self.createCells()
+        self.drawCanvas()
 
     # Game start/end
     def run(self):
@@ -27,11 +29,8 @@ class Game:
 
     # Create cells
     def createCells(self):
-        self.grid = [[None for col in range(COL_CELLS)] for row in range(ROW_CELLS)]        # Store 'Cell' objects
-        self.squares = [[None for col in range(COL_CELLS)] for row in range(ROW_CELLS)]     # Store drawn squares (for future updates)
         self.createBombs()
         self.createDefault()
-        self.drawCanvas()
         self.surroundingBombsValue()
 
     # Creating bombs
@@ -40,10 +39,14 @@ class Game:
         num_bombs = NUM_BOMBS
         while num_bombs != 0:
             randnum = random.randint(0,num_cells-1)
-            if self.grid[randnum//COL_CELLS][randnum%COL_CELLS] is None:
+            pos_x = randnum//COL_CELLS
+            pos_y = randnum%COL_CELLS
+            position = (pos_x,pos_y)
+            if self.grid[pos_x][pos_y] is None and position not in self.cantHaveBombs:
                 cell_bomb = Cell("BOMB")
-                self.grid[randnum//COL_CELLS][randnum%COL_CELLS] = cell_bomb
+                self.grid[pos_x][pos_y] = cell_bomb
                 num_bombs -= 1
+        
 
     # Creating default/non-bomb cells
     def createDefault(self):
@@ -55,6 +58,8 @@ class Game:
 
     # Draw canvas/grid
     def drawCanvas(self):
+        self.grid = [[None for col in range(COL_CELLS)] for row in range(ROW_CELLS)]        # Store 'Cell' objects
+        self.squares = [[None for col in range(COL_CELLS)] for row in range(ROW_CELLS)]     # Store drawn squares (for future updates)
         pygame.draw.rect(self.canvas, DARK_GREY, (GRID_POS[0], GRID_POS[1], GRID_WIDTH, GRID_HEIGHT), 2)
         for x in range(COL_CELLS):
             for y in range(ROW_CELLS):
@@ -133,7 +138,6 @@ class Game:
 
     # Gets square + operation (flag, click, unselect...) to fill the square with different colors/images/emojis(?)
     def updateSquare(self,cell,square,operation):
-        font = pygame.font.SysFont('Arial', 25)
         if operation == "CLICK":
             self.clickSquare(cell,square)
         elif operation == "FLAG":
@@ -209,6 +213,8 @@ class Game:
                 self.canvas.blit(font.render(self.time_text, True, WHITE), (100, 65))
                 pygame.display.update()
             elif event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_pos = event.pos
+                print(mouse_pos)
                 if self.firstTime:
                     self.clock = pygame.time.Clock()
                     self.time_counter = 0
@@ -218,11 +224,29 @@ class Game:
                     self.canvas.blit(self.timer_surface, (100, 49))
                     pygame.display.update()
                     pygame.time.set_timer(pygame.USEREVENT, 1000)
-                    self.firstTime = False
-                mouse_pos = event.pos
+                    cell,square,grid_position = self.getGridPosition(mouse_pos)
+                    if grid_position is None:
+                        print("na")
+                        return
+                    print("passou")
+                    self.firstPosition = grid_position
+                    self.cantHaveBombs = []
+                    for j in range(-1,2,1):
+                        for k in range(-1,2,1):
+                            if 0 <= self.firstPosition[0]+j < ROW_CELLS and 0 <= self.firstPosition[1]+k < COL_CELLS:
+                                print("ya")
+                                self.cantHaveBombs.append((self.firstPosition[0]+j,self.firstPosition[1]+k))
+                    print(self.cantHaveBombs)
+                    self.createCells()
+                    print("lll")
+                print(mouse_pos)
                 cell,square,grid_position = self.getGridPosition(mouse_pos)
-                if cell is None:
+                print(grid_position)
+                print("laslalsas")
+                if grid_position is None:
+                    print("na")
                     return
+                print("passou")
                 if event.button == 1:           # mouse left-click event
                     self.click(cell,square,grid_position)
                 elif event.button == 3:         # mouse right-click event
@@ -231,3 +255,5 @@ class Game:
                 print("CELLS: " + str(self.remaining_cells) + " | FLAGS: " + str(self.remaining_flags))
                 if self.checkWin():
                     self.end("W")
+                if self.firstTime:
+                    self.firstTime = False
